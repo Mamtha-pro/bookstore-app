@@ -1,1 +1,1 @@
-![Home Page](screenshots/DashBoard.jpeg)
+![Home Page](screenshots/DashBoard.png)
