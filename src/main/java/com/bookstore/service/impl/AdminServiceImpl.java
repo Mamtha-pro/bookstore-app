@@ -24,13 +24,12 @@ public class AdminServiceImpl implements AdminService {
         long totalOrders   = orderRepository.count();
         long totalPayments = paymentRepository.count();
 
-        // Calculate total revenue from all payments
         double totalRevenue = paymentRepository.findAll()
                 .stream()
-                .mapToDouble(p -> p.getAmount() != null ? p.getAmount() : 0.0)
+                .filter(p -> p.getAmount() != null)
+                .mapToDouble(p -> p.getAmount())
                 .sum();
 
-        // Count orders by status
         long pendingOrders = orderRepository.findAll()
                 .stream()
                 .filter(o -> o.getStatus() == OrderStatus.PENDING)
