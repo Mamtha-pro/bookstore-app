@@ -23,7 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/wishlist")
 @RequiredArgsConstructor
-@Tag(name = "❤️ Wishlist", description = "Save books for later and move to cart")
+@Tag(name = " Wishlist", description = "Save books for later and move to cart")
 @SecurityRequirement(name = "Bearer Authentication")
 public class WishlistController {
 
@@ -41,8 +41,8 @@ public class WishlistController {
     @PostMapping("/add")
     @Operation(summary = "Add book to wishlist")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "✅ Added to wishlist"),
-            @ApiResponse(responseCode = "400", description = "❌ Book already in wishlist")
+            @ApiResponse(responseCode = "201", description = " Added to wishlist"),
+            @ApiResponse(responseCode = "400", description = " Book already in wishlist")
     })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             content = @Content(examples = @ExampleObject(value = """
@@ -61,7 +61,7 @@ public class WishlistController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Remove from wishlist")
-    @ApiResponse(responseCode = "204", description = "✅ Removed from wishlist")
+    @ApiResponse(responseCode = "204", description = " Removed from wishlist")
     public ResponseEntity<Void> remove(
             @AuthenticationPrincipal UserDetails user,
             @Parameter(description = "Wishlist item ID", example = "1")
@@ -73,7 +73,7 @@ public class WishlistController {
     @PostMapping("/{id}/move-to-cart")
     @Operation(summary = "Move wishlist item to cart",
             description = "Moves book from wishlist directly into shopping cart.")
-    @ApiResponse(responseCode = "200", description = "✅ Moved to cart")
+    @ApiResponse(responseCode = "200", description = " Moved to cart")
     public ResponseEntity<Void> moveToCart(
             @AuthenticationPrincipal UserDetails user,
             @Parameter(description = "Wishlist item ID", example = "1")

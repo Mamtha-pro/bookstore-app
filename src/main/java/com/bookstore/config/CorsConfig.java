@@ -15,26 +15,26 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // ✅ Allow React frontend
+        //  Allow React frontend
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "http://localhost:3000",
                 "http://127.0.0.1:5173"
         ));
 
-        // ✅ Allow all HTTP methods
+        //  Allow all HTTP methods
         config.setAllowedMethods(List.of(
                 "GET", "POST", "PUT",
                 "DELETE", "PATCH", "OPTIONS"
         ));
 
-        // ✅ Allow all headers including Authorization
+        //  Allow all headers including Authorization
         config.setAllowedHeaders(List.of("*"));
 
-        // ✅ Allow JWT token in header
+        //  Allow JWT token in header
         config.setAllowCredentials(true);
 
-        // ✅ How long browser caches preflight (seconds)
+        //  How long browser caches preflight (seconds)
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source =

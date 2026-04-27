@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "📚 Books", description = "Browse, search and manage books")
+@Tag(name = " Books", description = "Browse, search and manage books")
 public class BookController {
 
     private final BookService bookService;
@@ -29,7 +29,7 @@ public class BookController {
     @GetMapping("/api/books")
     @Operation(summary = "Get all books (paginated)",
             description = "Returns all books with pagination. Public — no login needed.")
-    @ApiResponse(responseCode = "200", description = "✅ List of books returned")
+    @ApiResponse(responseCode = "200", description = " List of books returned")
     public Page<BookResponse> getAllBooks(
             @PageableDefault(size = 12) Pageable pageable) {
         return bookService.getAllBooks(pageable);
@@ -38,8 +38,8 @@ public class BookController {
     @GetMapping("/api/books/{id}")
     @Operation(summary = "Get single book by ID")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "✅ Book found"),
-            @ApiResponse(responseCode = "404", description = "❌ Book not found")
+            @ApiResponse(responseCode = "200", description = " Book found"),
+            @ApiResponse(responseCode = "404", description = " Book not found")
     })
     public BookResponse getBook(
             @Parameter(description = "Book ID", example = "1")
@@ -74,8 +74,8 @@ public class BookController {
             description = "Admin only — add a new book to the catalogue.",
             security = @SecurityRequirement(name = "Bearer Authentication"))
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "✅ Book created"),
-            @ApiResponse(responseCode = "403", description = "❌ Admin access required")
+            @ApiResponse(responseCode = "201", description = " Book created"),
+            @ApiResponse(responseCode = "403", description = " Admin access required")
     })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             content = @Content(examples = @ExampleObject(value = """
@@ -112,8 +112,8 @@ public class BookController {
             description = "Admin only — permanently delete a book.",
             security = @SecurityRequirement(name = "Bearer Authentication"))
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "✅ Book deleted"),
-            @ApiResponse(responseCode = "404", description = "❌ Book not found")
+            @ApiResponse(responseCode = "204", description = " Book deleted"),
+            @ApiResponse(responseCode = "404", description = " Book not found")
     })
     public ResponseEntity<Void> deleteBook(
             @Parameter(description = "Book ID", example = "1")

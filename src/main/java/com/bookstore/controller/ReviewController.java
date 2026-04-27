@@ -21,7 +21,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "⭐ Reviews", description = "Book reviews and ratings (1-5 stars)")
+@Tag(name = " Reviews", description = "Book reviews and ratings (1-5 stars)")
 public class ReviewController {
 
     private final ReviewService reviewService;
@@ -49,7 +49,7 @@ public class ReviewController {
     @GetMapping("/api/reviews/book/{bookId}")
     @Operation(summary = "Get all reviews for a book",
             description = "Public — no login needed. Returns all reviews for a book.")
-    @ApiResponse(responseCode = "200", description = "✅ Reviews returned")
+    @ApiResponse(responseCode = "200", description = " Reviews returned")
     public ResponseEntity<List<ReviewResponse>> getBookReviews(
             @Parameter(description = "Book ID", example = "1")
             @PathVariable Long bookId) {
@@ -71,7 +71,7 @@ public class ReviewController {
     @DeleteMapping("/api/reviews/{id}")
     @Operation(summary = "Delete own review")
     @SecurityRequirement(name = "Bearer Authentication")
-    @ApiResponse(responseCode = "204", description = "✅ Review deleted")
+    @ApiResponse(responseCode = "204", description = " Review deleted")
     public ResponseEntity<Void> deleteReview(
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long id) {

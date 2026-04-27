@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name = "🔐 Authentication", description = "Register, Login and token management")
+@Tag(name = " Authentication", description = "Register, Login and token management")
 public class AuthController {
 
     private final AuthService authService;
@@ -32,8 +32,8 @@ public class AuthController {
             description = "Creates a new USER account. Returns user details on success."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "✅ User registered successfully"),
-            @ApiResponse(responseCode = "400", description = "❌ Email already registered")
+            @ApiResponse(responseCode = "201", description = " User registered successfully"),
+            @ApiResponse(responseCode = "400", description = " Email already registered")
     })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             content = @Content(examples = @ExampleObject(value = """
@@ -55,7 +55,7 @@ public class AuthController {
             summary = "Login and get JWT token",
             description = """
             Login with email and password.
-            Returns a JWT token — copy it and click **Authorize** 🔒 button above.
+            Returns a JWT token — copy it and click **Authorize**  button above.
             Enter: `Bearer <your_token>`
             
             **Test credentials:**
@@ -64,8 +64,8 @@ public class AuthController {
             """
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "✅ Login successful — JWT token returned"),
-            @ApiResponse(responseCode = "401", description = "❌ Wrong email or password")
+            @ApiResponse(responseCode = "200", description = " Login successful — JWT token returned"),
+            @ApiResponse(responseCode = "401", description = " Wrong email or password")
     })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             content = @Content(examples = {

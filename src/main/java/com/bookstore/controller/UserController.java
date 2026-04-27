@@ -31,7 +31,7 @@ public class UserController {
     @GetMapping("/api/users/me")
     @Operation(summary = "Get my profile",
             description = "Returns the logged-in user's profile details.")
-    @ApiResponse(responseCode = "200", description = "✅ Profile returned")
+    @ApiResponse(responseCode = "200", description = " Profile returned")
     public ResponseEntity<UserResponse> getMyProfile(
             @AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.ok(userService.getMyProfile(user.getUsername()));
@@ -91,7 +91,7 @@ public class UserController {
     @DeleteMapping("/api/admin/users/{id}")
     @Operation(summary = "Delete user (Admin)",
             description = "Admin only — permanently delete a user account.")
-    @ApiResponse(responseCode = "204", description = "✅ User deleted")
+    @ApiResponse(responseCode = "204", description = " User deleted")
     public ResponseEntity<Void> deleteUser(
             @Parameter(description = "User ID", example = "1")
             @PathVariable Long id) {

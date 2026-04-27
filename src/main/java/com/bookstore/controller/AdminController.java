@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-@Tag(name = "🛠️ Admin", description = "Admin dashboard and management")
+@Tag(name = " Admin", description = "Admin dashboard and management")
 @SecurityRequirement(name = "Bearer Authentication")
 public class AdminController {
 
@@ -27,7 +27,7 @@ public class AdminController {
                    - Total revenue
                    - Pending vs delivered orders
                    """)
-    @ApiResponse(responseCode = "200", description = "✅ Dashboard stats returned")
+    @ApiResponse(responseCode = "200", description = " Dashboard stats returned")
     public ResponseEntity<DashboardResponse> getDashboard() {
         return ResponseEntity.ok(adminService.getDashboardStats());
     }

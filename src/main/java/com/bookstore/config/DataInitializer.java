@@ -38,7 +38,7 @@ public class DataInitializer implements CommandLineRunner {
                     .role(Role.ADMIN)
                     .build();
             userRepository.save(admin);
-            log.info("✅ Admin created → admin@bookstore.com / admin123");
+            log.info(" Admin created → admin@bookstore.com / admin123");
         }
 
         if (!userRepository.existsByEmail("user@bookstore.com")) {
@@ -49,7 +49,7 @@ public class DataInitializer implements CommandLineRunner {
                     .role(Role.USER)
                     .build();
             userRepository.save(user);
-            log.info("✅ Test user created → user@bookstore.com / user123");
+            log.info(" Test user created → user@bookstore.com / user123");
         }
     }
 
@@ -62,7 +62,7 @@ public class DataInitializer implements CommandLineRunner {
         List<Book> books = List.of(
 
                 // ══════════════════════════════════════════
-                // 📗 PROGRAMMING (20 books)
+                //  PROGRAMMING (20 books)
                 // ══════════════════════════════════════════
                 Book.builder().title("Clean Code")
                         .author("Robert C. Martin").isbn("9780132350884")
@@ -185,7 +185,7 @@ public class DataInitializer implements CommandLineRunner {
                         .imageUrl("https://covers.openlibrary.org/b/isbn/9781593279523-L.jpg").build(),
 
                 // ══════════════════════════════════════════
-                // 📘 FICTION (20 books)
+                //  FICTION (20 books)
                 // ══════════════════════════════════════════
                 Book.builder().title("The Alchemist")
                         .author("Paulo Coelho").isbn("9780062315007")
@@ -308,7 +308,7 @@ public class DataInitializer implements CommandLineRunner {
                         .imageUrl("https://covers.openlibrary.org/b/isbn/9780307454546-L.jpg").build(),
 
                 // ══════════════════════════════════════════
-                // 📙 SELF HELP (15 books)
+                //  SELF HELP (15 books)
                 // ══════════════════════════════════════════
                 Book.builder().title("Atomic Habits")
                         .author("James Clear").isbn("9780735211292")
@@ -401,7 +401,7 @@ public class DataInitializer implements CommandLineRunner {
                         .imageUrl("https://covers.openlibrary.org/b/isbn/9781593157630-L.jpg").build(),
 
                 // ══════════════════════════════════════════
-                // 🔬 SCIENCE (15 books)
+                //  SCIENCE (15 books)
                 // ══════════════════════════════════════════
                 Book.builder().title("A Brief History of Time")
                         .author("Stephen Hawking").isbn("9780553380163")
@@ -494,7 +494,7 @@ public class DataInitializer implements CommandLineRunner {
                         .imageUrl("https://covers.openlibrary.org/b/isbn/9780805092998-L.jpg").build(),
 
                 // ══════════════════════════════════════════
-                // 💼 BUSINESS (15 books)
+                //  BUSINESS (15 books)
                 // ══════════════════════════════════════════
                 Book.builder().title("Zero to One")
                         .author("Peter Thiel").isbn("9780804139021")
@@ -587,7 +587,7 @@ public class DataInitializer implements CommandLineRunner {
                         .imageUrl("https://covers.openlibrary.org/b/isbn/9780593189641-L.jpg").build(),
 
                 // ══════════════════════════════════════════
-                // 🧘 SPIRITUALITY (10 books)
+                //  SPIRITUALITY (10 books)
                 // ══════════════════════════════════════════
                 Book.builder().title("The Bhagavad Gita")
                         .author("Eknath Easwaran").isbn("9781586380199")
@@ -650,7 +650,7 @@ public class DataInitializer implements CommandLineRunner {
                         .imageUrl("https://covers.openlibrary.org/b/isbn/9780812997798-L.jpg").build(),
 
                 // ══════════════════════════════════════════
-                // 🎨 DESIGN (5 books)
+                //  DESIGN (5 books)
                 // ══════════════════════════════════════════
                 Book.builder().title("The Design of Everyday Things")
                         .author("Don Norman").isbn("9780465050659")
@@ -684,5 +684,5 @@ public class DataInitializer implements CommandLineRunner {
         );
 
         bookRepository.saveAll(books);
-        log.info("✅ {} books loaded successfully! 🎉", books.size());
+        log.info(" {} books loaded successfully! 🎉", books.size());
     }}

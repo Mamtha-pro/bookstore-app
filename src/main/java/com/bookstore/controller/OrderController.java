@@ -32,8 +32,8 @@ public class OrderController {
     @Operation(summary = "Place order from cart",
             description = "Converts current cart into an order. Cart is cleared after.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "✅ Order placed successfully"),
-            @ApiResponse(responseCode = "400", description = "❌ Cart is empty")
+            @ApiResponse(responseCode = "201", description = " Order placed successfully"),
+            @ApiResponse(responseCode = "400", description = " Cart is empty")
     })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             content = @Content(examples = @ExampleObject(value = """
@@ -60,8 +60,8 @@ public class OrderController {
     @GetMapping("/api/orders/{id}")
     @Operation(summary = "Get single order details")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "✅ Order found"),
-            @ApiResponse(responseCode = "404", description = "❌ Order not found")
+            @ApiResponse(responseCode = "200", description = " Order found"),
+            @ApiResponse(responseCode = "404", description = " Order not found")
     })
     public OrderResponse getOrder(
             @AuthenticationPrincipal UserDetails user,
@@ -74,8 +74,8 @@ public class OrderController {
     @Operation(summary = "Cancel order",
             description = "Cancel a PENDING order. Cannot cancel SHIPPED or DELIVERED orders.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "✅ Order cancelled"),
-            @ApiResponse(responseCode = "400", description = "❌ Order cannot be cancelled")
+            @ApiResponse(responseCode = "200", description = " Order cancelled"),
+            @ApiResponse(responseCode = "400", description = " Order cannot be cancelled")
     })
     public OrderResponse cancelOrder(
             @AuthenticationPrincipal UserDetails user,

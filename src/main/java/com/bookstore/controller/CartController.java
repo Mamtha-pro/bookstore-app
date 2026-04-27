@@ -29,7 +29,7 @@ public class CartController {
     @GetMapping
     @Operation(summary = "View my cart",
             description = "Returns current user's cart with all items and total amount.")
-    @ApiResponse(responseCode = "200", description = "✅ Cart returned")
+    @ApiResponse(responseCode = "200", description = " Cart returned")
     public CartResponse getCart(
             @AuthenticationPrincipal UserDetails user) {
         return cartService.getCart(user.getUsername());
@@ -39,8 +39,8 @@ public class CartController {
     @Operation(summary = "Add book to cart",
             description = "Adds a book to cart. If book already in cart, increases quantity.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "✅ Item added to cart"),
-            @ApiResponse(responseCode = "404", description = "❌ Book not found")
+            @ApiResponse(responseCode = "200", description = " Item added to cart"),
+            @ApiResponse(responseCode = "404", description = " Book not found")
     })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             content = @Content(examples = @ExampleObject(value = """
@@ -68,7 +68,7 @@ public class CartController {
 
     @DeleteMapping("/items/{id}")
     @Operation(summary = "Remove item from cart")
-    @ApiResponse(responseCode = "204", description = "✅ Item removed")
+    @ApiResponse(responseCode = "204", description = " Item removed")
     public ResponseEntity<Void> removeItem(
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long id) {
@@ -79,7 +79,7 @@ public class CartController {
     @DeleteMapping("/clear")
     @Operation(summary = "Clear entire cart",
             description = "Removes ALL items from the cart.")
-    @ApiResponse(responseCode = "204", description = "✅ Cart cleared")
+    @ApiResponse(responseCode = "204", description = " Cart cleared")
     public ResponseEntity<Void> clearCart(
             @AuthenticationPrincipal UserDetails user) {
         cartService.clearCart(user.getUsername());

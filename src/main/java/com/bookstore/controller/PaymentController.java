@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "💳 Payments",
+@Tag(name = " Payments",
         description = "Mock payment — UPI, Card, Net Banking, Wallet, COD")
 @SecurityRequirement(name = "Bearer Authentication")
 public class PaymentController {
