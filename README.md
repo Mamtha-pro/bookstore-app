@@ -73,6 +73,13 @@ This application allows users to browse books, manage cart, place orders, and ma
 ### 🧾 Payment History
 ![Payment History](screenshots/paymenthistory.png)
 
+### 🧾 AiAgent
+![Payment History](screenshots/AiAgent.png)
+
+
+
+
+
 ---
 
 ## ⚙️ Installation & Setup
