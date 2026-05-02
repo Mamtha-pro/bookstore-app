@@ -6,54 +6,82 @@ import { MdAdminPanelSettings } from 'react-icons/md';
 import './Navbar.css';
 
 export default function Navbar() {
-  const { isAuthenticated, user } = useSelector((s) => s.auth);
-  const { items } = useSelector((s) => s.cart);
-  const dispatch  = useDispatch();
-  const navigate  = useNavigate();
+  const { isAuthenticated, user } = useSelector(s => s.auth);
+  const { items }  = useSelector(s => s.cart);
+  const dispatch   = useDispatch();
+  const navigate   = useNavigate();
+
+  // ✅ Debug — remove after fixing
+  console.log('Navbar user:', user);
+  console.log('Is admin:', user?.role === 'ADMIN');
 
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
   };
 
+  // ✅ Check role — case insensitive to be safe
+  const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
+
   return (
     <nav className="navbar">
       <div className="nav-inner">
+
+        {/* Logo */}
         <Link to="/" className="nav-logo">
           <FiBook /> BookStore
         </Link>
 
+        {/* Links */}
         <div className="nav-links">
           <Link to="/books">Books</Link>
-          {isAuthenticated && <Link to="/wishlist"><FiHeart /> Wishlist</Link>}
+
+          {isAuthenticated && (
+            <Link to="/wishlist">
+              <FiHeart /> Wishlist
+            </Link>
+          )}
+
           {isAuthenticated && (
             <Link to="/cart" className="cart-link">
               <FiShoppingCart />
-              {items.length > 0 && <span className="cart-badge">{items.length}</span>}
+              {items && items.length > 0 && (
+                <span className="cart-badge">{items.length}</span>
+              )}
               Cart
             </Link>
           )}
-          {user?.role === 'ADMIN' && (
+
+          {/* ✅ Show Admin link if role is ADMIN */}
+          {isAuthenticated && isAdmin && (
             <Link to="/admin" className="admin-link">
               <MdAdminPanelSettings /> Admin
             </Link>
           )}
         </div>
 
+        {/* Actions */}
         <div className="nav-actions">
           {isAuthenticated ? (
             <>
               <Link to="/profile" className="nav-user">
-                <FiUser /> {user?.name || 'Profile'}
+                <FiUser />
+                {user?.name || user?.email?.split('@')[0] || 'Profile'}
               </Link>
-              <button className="btn btn-outline btn-sm" onClick={handleLogout}>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={handleLogout}>
                 <FiLogOut /> Logout
               </button>
             </>
           ) : (
             <>
-              <Link to="/login"  className="btn btn-outline btn-sm">Login</Link>
-              <Link to="/register" className="btn btn-primary btn-sm">Register</Link>
+              <Link to="/login"    className="btn btn-outline btn-sm">
+                Login
+              </Link>
+              <Link to="/register" className="btn btn-primary btn-sm">
+                Register
+              </Link>
             </>
           )}
         </div>

@@ -13,20 +13,23 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getCart().then(r => dispatch(setCart(r.data))).finally(() => setLoading(false));
+    // ✅ CHANGED: r.data.data because backend now wraps in ApiResponse
+    getCart().then(r => dispatch(setCart(r.data.data))).finally(() => setLoading(false));
   }, []);
 
   const handleQty = async (itemId, qty) => {
     if (qty < 1) return;
     await updateCartItem(itemId, qty);
+    // ✅ CHANGED: r.data.data
     const r = await getCart();
-    dispatch(setCart(r.data));
+    dispatch(setCart(r.data.data));
   };
 
   const handleRemove = async (itemId) => {
     await removeCartItem(itemId);
+    // ✅ CHANGED: r.data.data
     const r = await getCart();
-    dispatch(setCart(r.data));
+    dispatch(setCart(r.data.data));
     toast.success('Item removed');
   };
 

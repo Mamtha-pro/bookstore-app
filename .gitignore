@@ -19,6 +19,27 @@ target/
 *.iml
 *.ipr
 
+# Maven
+target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Environment — NEVER commit this!
+.env
+*.env
+application-prod.yml
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

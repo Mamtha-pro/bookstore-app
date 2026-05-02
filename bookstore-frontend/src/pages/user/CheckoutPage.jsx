@@ -72,23 +72,17 @@ export default function CheckoutPage() {
     const loadCart = async () => {
       try {
         setCartLoading(true);
-        const res = await api.get('/api/cart');
-        const data = res.data;
-
-        // Sync to Redux too
+        const res  = await api.get('/api/cart');
+        const data = res.data.data;
         dispatch(setCart(data));
-
-        // Set local state
         setCartItems(data.items || []);
         setTotalAmount(data.totalAmount || 0);
-
       } catch (err) {
         toast.error('Failed to load cart');
       } finally {
         setCartLoading(false);
       }
     };
-
     loadCart();
   }, [dispatch]);
 
@@ -116,73 +110,51 @@ export default function CheckoutPage() {
 
   // ── Pay Now ───────────────────────────────────────────────────────
   const handlePay = async () => {
-
-    // ✅ Use local cartItems (freshly loaded from backend)
     if (!cartItems || cartItems.length === 0) {
       toast.error('Cart is empty! Add books first.');
       navigate('/books');
       return;
     }
-
     if (!address.trim()) {
       toast.error('Please enter delivery address');
       return;
     }
-
-    // Validate payment fields
     if (method === 'UPI' && !upiId.includes('@')) {
       toast.error('Enter valid UPI ID (e.g. name@upi)');
       return;
     }
     if (method === 'CARD') {
       const rawCard = cardNumber.replace(/\s/g, '');
-      if (rawCard.length < 16) {
-        toast.error('Enter valid 16-digit card number');
-        return;
-      }
-      if (!cardHolder.trim()) {
-        toast.error('Enter cardholder name');
-        return;
-      }
-      if (expiry.length < 5) {
-        toast.error('Enter valid expiry (MM/YY)');
-        return;
-      }
-      if (cvv.length < 3) {
-        toast.error('Enter valid CVV');
-        return;
-      }
+      if (rawCard.length < 16) { toast.error('Enter valid 16-digit card number'); return; }
+      if (!cardHolder.trim())  { toast.error('Enter cardholder name');            return; }
+      if (expiry.length < 5)   { toast.error('Enter valid expiry (MM/YY)');       return; }
+      if (cvv.length < 3)      { toast.error('Enter valid CVV');                  return; }
     }
 
     setLoading(true);
     setProcessing(true);
 
     try {
-      // Step 1: Place order
-      const { data: order } = await api.post('/api/orders',
-        { address: address.trim() });
+      const res   = await api.post('/api/orders', { address: address.trim() });
+      const order = res.data.data;
 
-      // Step 2: Simulate processing delay
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Step 3: Process payment
       const paymentData = {
         orderId:       order.id,
         paymentMethod: method,
-        upiId:         method === 'UPI'         ? upiId      : null,
-        cardNumber:    method === 'CARD'
-                         ? cardNumber.replace(/\s/g, '') : null,
-        cardHolder:    method === 'CARD'        ? cardHolder : null,
-        expiry:        method === 'CARD'        ? expiry     : null,
-        cvv:           method === 'CARD'        ? cvv        : null,
-        bankName:      method === 'NET_BANKING' ? bankName   : null,
-        walletName:    method === 'WALLET'      ? walletName : null,
+        upiId:         method === 'UPI'         ? upiId                        : null,
+        cardNumber:    method === 'CARD'        ? cardNumber.replace(/\s/g,'') : null,
+        cardHolder:    method === 'CARD'        ? cardHolder                   : null,
+        expiry:        method === 'CARD'        ? expiry                       : null,
+        cvv:           method === 'CARD'        ? cvv                          : null,
+        bankName:      method === 'NET_BANKING' ? bankName                     : null,
+        walletName:    method === 'WALLET'      ? walletName                   : null,
       };
 
-      const { data: payment } = await api.post(
-        '/api/payments/initiate', paymentData);
+      const payRes  = await api.post('/api/payments/initiate', paymentData);
+      const payment = payRes.data.data;
 
-      // Step 4: Success!
       setTxnId(payment.transactionId);
       setSuccess(true);
       setProcessing(false);
@@ -191,9 +163,7 @@ export default function CheckoutPage() {
     } catch (err) {
       setProcessing(false);
       setLoading(false);
-      const errMsg = err.response?.data?.error
-              || err.response?.data?.message
-              || 'Payment failed. Please try again.';
+      const errMsg = err.response?.data?.message || 'Payment failed. Please try again.';
       toast.error(errMsg);
     }
   };
@@ -352,16 +322,14 @@ export default function CheckoutPage() {
                 {METHODS.map(m => (
                   <button
                     key={m.id}
-                    className={`co-method
-                      ${method === m.id ? 'co-selected' : ''}`}
+                    className={`co-method ${method === m.id ? 'co-selected' : ''}`}
                     onClick={() => setMethod(m.id)}>
                     <span className="co-method-icon">{m.icon}</span>
                     <div className="co-method-text">
                       <span className="co-method-label">{m.label}</span>
                       <span className="co-method-desc">{m.desc}</span>
                     </div>
-                    <div className={`co-radio
-                      ${method === m.id ? 'co-radio-on' : ''}`} />
+                    <div className={`co-radio ${method === m.id ? 'co-radio-on' : ''}`} />
                   </button>
                 ))}
               </div>
@@ -382,18 +350,15 @@ export default function CheckoutPage() {
                   <div className="upi-apps">
                     <span>Quick fill:</span>
                     <button className="upi-app" onClick={() =>
-                      setUpiId(user?.name?.toLowerCase()
-                        ?.replace(' ','') + '@okaxis')}>
+                      setUpiId(user?.name?.toLowerCase()?.replace(' ','') + '@okaxis')}>
                       GPay
                     </button>
                     <button className="upi-app" onClick={() =>
-                      setUpiId(user?.name?.toLowerCase()
-                        ?.replace(' ','') + '@ybl')}>
+                      setUpiId(user?.name?.toLowerCase()?.replace(' ','') + '@ybl')}>
                       PhonePe
                     </button>
                     <button className="upi-app" onClick={() =>
-                      setUpiId(user?.name?.toLowerCase()
-                        ?.replace(' ','') + '@paytm')}>
+                      setUpiId(user?.name?.toLowerCase()?.replace(' ','') + '@paytm')}>
                       Paytm
                     </button>
                   </div>
@@ -406,8 +371,7 @@ export default function CheckoutPage() {
                   <h3>Card Details</h3>
 
                   {/* Card Preview */}
-                  <div className={`card-preview
-                    ${cardFlipped ? 'flipped' : ''}`}>
+                  <div className={`card-preview ${cardFlipped ? 'flipped' : ''}`}>
                     <div className="card-front">
                       <div className="card-chip">💳</div>
                       <div className="card-number-display">
@@ -416,15 +380,11 @@ export default function CheckoutPage() {
                       <div className="card-bottom">
                         <div>
                           <div className="card-label">Card Holder</div>
-                          <div className="card-value">
-                            {cardHolder || 'YOUR NAME'}
-                          </div>
+                          <div className="card-value">{cardHolder || 'YOUR NAME'}</div>
                         </div>
                         <div>
                           <div className="card-label">Expires</div>
-                          <div className="card-value">
-                            {expiry || 'MM/YY'}
-                          </div>
+                          <div className="card-value">{expiry || 'MM/YY'}</div>
                         </div>
                       </div>
                     </div>
@@ -443,8 +403,7 @@ export default function CheckoutPage() {
                     <label>Card Number</label>
                     <input
                       value={cardNumber}
-                      onChange={e =>
-                        setCardNumber(formatCard(e.target.value))}
+                      onChange={e => setCardNumber(formatCard(e.target.value))}
                       placeholder="1234 5678 9012 3456"
                       maxLength={19}
                     />
@@ -453,22 +412,16 @@ export default function CheckoutPage() {
                     <label>Cardholder Name</label>
                     <input
                       value={cardHolder}
-                      onChange={e =>
-                        setCardHolder(e.target.value.toUpperCase())}
+                      onChange={e => setCardHolder(e.target.value.toUpperCase())}
                       placeholder="NAME AS ON CARD"
                     />
                   </div>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 12
-                  }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div className="form-group">
                       <label>Expiry Date</label>
                       <input
                         value={expiry}
-                        onChange={e =>
-                          setExpiry(formatExpiry(e.target.value))}
+                        onChange={e => setExpiry(formatExpiry(e.target.value))}
                         placeholder="MM/YY"
                         maxLength={5}
                       />
@@ -477,15 +430,12 @@ export default function CheckoutPage() {
                       <label>CVV</label>
                       <input
                         value={cvv}
-                        onChange={e =>
-                          setCvv(e.target.value
-                            .replace(/\D/g, '')
-                            .substring(0, 3))}
+                        onChange={e => setCvv(e.target.value.replace(/\D/g,'').substring(0,3))}
                         placeholder="•••"
                         maxLength={3}
                         type="password"
                         onFocus={() => setCardFlipped(true)}
-                        onBlur={() => setCardFlipped(false)}
+                        onBlur={()  => setCardFlipped(false)}
                       />
                     </div>
                   </div>
@@ -502,8 +452,7 @@ export default function CheckoutPage() {
                   <div className="bank-grid">
                     {BANKS.map(bank => (
                       <button key={bank}
-                        className={`bank-option
-                          ${bankName === bank ? 'bank-selected' : ''}`}
+                        className={`bank-option ${bankName === bank ? 'bank-selected' : ''}`}
                         onClick={() => setBankName(bank)}>
                         🏦 {bank}
                       </button>
@@ -519,8 +468,7 @@ export default function CheckoutPage() {
                   <div className="wallet-grid">
                     {WALLETS.map(w => (
                       <button key={w}
-                        className={`wallet-option
-                          ${walletName === w ? 'wallet-selected' : ''}`}
+                        className={`wallet-option ${walletName === w ? 'wallet-selected' : ''}`}
                         onClick={() => setWalletName(w)}>
                         👜 {w}
                       </button>
@@ -590,9 +538,7 @@ export default function CheckoutPage() {
           </div>
           <div className="co-summary-row">
             <span>Delivery</span>
-            <span style={{
-              color: 'var(--success)', fontWeight: 700
-            }}>FREE</span>
+            <span style={{ color: 'var(--success)', fontWeight: 700 }}>FREE</span>
           </div>
 
           <hr className="co-divider" />
@@ -603,11 +549,12 @@ export default function CheckoutPage() {
           </div>
 
           <div className="co-trust">
-            <span>✅ Free Returns</span>
-            <span>🔒 Secure</span>
-            <span>📦 Fast Ship</span>
+            <span> Free Returns</span>
+            <span>Secure</span>
+            <span> Fast Ship</span>
           </div>
         </div>
+
       </div>
     </div>
   );

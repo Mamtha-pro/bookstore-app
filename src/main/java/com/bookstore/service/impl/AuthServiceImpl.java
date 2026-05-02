@@ -1,18 +1,21 @@
 package com.bookstore.service.impl;
 
-
 import com.bookstore.constants.Role;
-import com.bookstore.dto.request.*;
-import com.bookstore.dto.response.*;
+import com.bookstore.dto.request.LoginRequest;
+import com.bookstore.dto.request.RegisterRequest;
+import com.bookstore.dto.response.AuthResponse;
+import com.bookstore.dto.response.UserResponse;
 import com.bookstore.entity.User;
 import com.bookstore.exception.BadRequestException;
+import com.bookstore.mapper.UserMapper;
 import com.bookstore.repository.UserRepository;
 import com.bookstore.security.JwtTokenProvider;
 import com.bookstore.service.AuthService;
-import com.bookstore.util.UserRegisteredEvent;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.authentication.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,12 +24,15 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final ApplicationEventPublisher eventPublisher;
+    private static final Logger log =
+            LoggerFactory.getLogger(AuthServiceImpl.class);
 
+    private final UserRepository        userRepository;
+    private final PasswordEncoder       passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider      jwtTokenProvider;
+
+    // ── Register ──────────────────────────────────────────────────────
     @Override
     public UserResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -41,30 +47,36 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         User saved = userRepository.save(user);
-        eventPublisher.publishEvent(
-                new UserRegisteredEvent(this, saved.getEmail(), saved.getName())
-        );
-
-        UserResponse response = new UserResponse();
-        response.setId(saved.getId());
-        response.setName(saved.getName());
-        response.setEmail(saved.getEmail());
-        response.setRole(saved.getRole().name());
-        response.setCreatedAt(saved.getCreatedAt());
-        return response;
-
+        log.info("User registered: " + saved.getEmail());
+        return UserMapper.toResponse(saved);
     }
 
+    // ── Login ─────────────────────────────────────────────────────────
     @Override
     public AuthResponse login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
+        // Step 1: Authenticate
+        Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getEmail(), request.getPassword()));
+                        request.getEmail(),
+                        request.getPassword()));
 
-        String token = jwtTokenProvider.generateToken(authentication);
-        String role = authentication.getAuthorities().iterator().next()
-                .getAuthority().replace("ROLE_", "");
+        // Step 2: Generate token
+        String token = jwtTokenProvider.generateToken(auth);
 
-        return new AuthResponse(token, role);
+        // Step 3: Extract role
+        String role = auth.getAuthorities()
+                .iterator()
+                .next()
+                .getAuthority()
+                .replace("ROLE_", "");
+
+        // Step 4: Get user details for name and email ✅ ADDED
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        log.info("User logged in: " + request.getEmail() + " role: " + role);
+
+        // Step 5: Return token + role + email + name ✅ CHANGED
+        return new AuthResponse(token, role, user.getEmail(), user.getName());
     }
 }

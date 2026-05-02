@@ -1,0 +1,9 @@
+package com.bookstore.dto.request;
+
+import lombok.Data;
+
+@Data
+public class AiChatRequest {
+    private String message;
+    private String userEmail;
+}

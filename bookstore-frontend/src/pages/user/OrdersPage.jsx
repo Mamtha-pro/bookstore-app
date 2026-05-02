@@ -12,7 +12,8 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getMyOrders().then(r => setOrders(r.data)).finally(() => setLoading(false));
+    // ✅ CHANGED: r.data.data because backend now wraps in ApiResponse
+    getMyOrders().then(r => setOrders(r.data.data)).finally(() => setLoading(false));
   }, []);
 
   const handleCancel = async (id) => {

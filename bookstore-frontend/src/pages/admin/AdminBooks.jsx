@@ -63,7 +63,7 @@ export default function AdminBooks() {
                 <td><span className="badge badge-info">{b.category}</span></td>
                 <td>₹{b.price}</td>
                 <td><span className={`badge ${b.stock>0?'badge-success':'badge-danger'}`}>{b.stock}</span></td>
-                <td>
+                <td style={{ whiteSpace: 'nowrap' }}>
                   <button className="btn btn-outline btn-sm" style={{ marginRight:6 }} onClick={() => openEdit(b)}>
                     <FiEdit />
                   </button>

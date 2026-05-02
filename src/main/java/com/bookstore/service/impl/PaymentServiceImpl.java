@@ -9,6 +9,7 @@ import com.bookstore.entity.Order;
 import com.bookstore.entity.Payment;
 import com.bookstore.exception.BadRequestException;
 import com.bookstore.exception.ResourceNotFoundException;
+import com.bookstore.mapper.PaymentMapper;
 import com.bookstore.repository.OrderRepository;
 import com.bookstore.repository.PaymentRepository;
 import com.bookstore.service.PaymentService;
@@ -36,28 +37,6 @@ public class PaymentServiceImpl implements PaymentService {
     private final OrderRepository           orderRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    // ── Entity → DTO ──────────────────────────────────────────────────
-    private PaymentResponse toResponse(Payment p) {
-        return PaymentResponse.builder()
-                .id(p.getId())
-                .orderId(p.getOrder().getId())
-                .amount(p.getAmount())
-                .status(p.getStatus().name())
-                .paymentMethod(p.getPaymentMethod())
-                .transactionId(p.getTransactionId())
-                .gatewayPaymentId(p.getGatewayPaymentId())
-                .failureReason(p.getFailureReason())
-                .cardLast4(p.getCardLast4())
-                .cardNetwork(p.getCardNetwork())
-                .upiId(p.getUpiId())
-                .bankName(p.getBankName())
-                .walletName(p.getWalletName())
-                .paidAt(p.getPaidAt())
-                .createdAt(p.getCreatedAt())
-                .build();
-    }
-
-    // ── Generate Transaction ID ───────────────────────────────────────
     private String generateTxnId() {
         return "TXN" + System.currentTimeMillis()
                 + UUID.randomUUID().toString()
@@ -66,27 +45,23 @@ public class PaymentServiceImpl implements PaymentService {
                 .toUpperCase();
     }
 
-    // ── Detect Card Network ───────────────────────────────────────────
     private String detectCardNetwork(String cardNumber) {
         if (cardNumber == null) return "VISA";
         String num = cardNumber.replaceAll("\\s", "");
-        if (num.startsWith("4"))                    return "VISA";
-        if (num.startsWith("5"))                    return "MASTERCARD";
-        if (num.startsWith("6"))                    return "RUPAY";
+        if (num.startsWith("4"))                          return "VISA";
+        if (num.startsWith("5"))                          return "MASTERCARD";
+        if (num.startsWith("6"))                          return "RUPAY";
         if (num.startsWith("34") || num.startsWith("37")) return "AMEX";
         return "VISA";
     }
 
-    // ── INITIATE PAYMENT ──────────────────────────────────────────────
     @Override
     @Transactional
     public PaymentResponse initiatePayment(PaymentRequest request) {
-
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Order not found"));
 
-        // Block duplicate successful payment
         paymentRepository.findByOrderId(request.getOrderId())
                 .ifPresent(existing -> {
                     if (existing.getStatus() == PaymentStatus.SUCCESS)
@@ -104,16 +79,12 @@ public class PaymentServiceImpl implements PaymentService {
                 .gatewayPaymentId("MOCK_" + txnId)
                 .paidAt(LocalDateTime.now());
 
-        // ── Set status and method-specific fields ─────────────────────
         if ("COD".equals(method)) {
             builder.status(PaymentStatus.PENDING);
-
         } else if ("UPI".equals(method)) {
             builder.status(PaymentStatus.SUCCESS);
-            String upiId = request.getUpiId() != null
-                    ? request.getUpiId() : "user@upi";
-            builder.upiId(upiId);
-
+            builder.upiId(request.getUpiId() != null
+                    ? request.getUpiId() : "user@upi");
         } else if ("CARD".equals(method)) {
             builder.status(PaymentStatus.SUCCESS);
             String cardNum = request.getCardNumber() != null
@@ -123,28 +94,23 @@ public class PaymentServiceImpl implements PaymentService {
                     ? cardNum.substring(cardNum.length() - 4) : "1111";
             builder.cardLast4(last4);
             builder.cardNetwork(detectCardNetwork(cardNum));
-
         } else if ("NET_BANKING".equals(method)) {
             builder.status(PaymentStatus.SUCCESS);
             builder.bankName(request.getBankName() != null
                     ? request.getBankName() : "State Bank of India");
-
         } else if ("WALLET".equals(method)) {
             builder.status(PaymentStatus.SUCCESS);
             builder.walletName(request.getWalletName() != null
                     ? request.getWalletName() : "Paytm");
-
         } else {
             builder.status(PaymentStatus.SUCCESS);
         }
 
         Payment saved = paymentRepository.save(builder.build());
 
-        // Confirm order
         order.setStatus(OrderStatus.CONFIRMED);
         orderRepository.save(order);
 
-        // Fire notification for non-COD
         if (!"COD".equals(method)) {
             eventPublisher.publishEvent(new PaymentSuccessEvent(
                     this,
@@ -158,10 +124,9 @@ public class PaymentServiceImpl implements PaymentService {
                 + " method: " + method
                 + " order: " + order.getId());
 
-        return toResponse(saved);
+        return PaymentMapper.toResponse(saved);
     }
 
-    // ── VERIFY PAYMENT ────────────────────────────────────────────────
     @Override
     @Transactional
     public PaymentResponse verifyPayment(PaymentVerifyRequest request) {
@@ -169,10 +134,9 @@ public class PaymentServiceImpl implements PaymentService {
                 .findByTransactionId(request.getTransactionId())
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Payment not found"));
-        return toResponse(payment);
+        return PaymentMapper.toResponse(payment);
     }
 
-    // ── REFUND ────────────────────────────────────────────────────────
     @Override
     @Transactional
     public PaymentResponse refundPayment(Long paymentId) {
@@ -189,38 +153,33 @@ public class PaymentServiceImpl implements PaymentService {
         orderRepository.save(payment.getOrder());
 
         log.info("Refund processed for payment: " + paymentId);
-        return toResponse(paymentRepository.save(payment));
+        return PaymentMapper.toResponse(paymentRepository.save(payment));
     }
 
-    // ── GET BY ORDER ──────────────────────────────────────────────────
     @Override
     public PaymentResponse getPaymentByOrderId(Long orderId) {
-        return toResponse(
+        return PaymentMapper.toResponse(
                 paymentRepository.findByOrderId(orderId)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
-                                        "Payment not found for order: "
-                                                + orderId)));
+                                        "Payment not found for order: " + orderId)));
     }
 
-    // ── ADMIN: ALL PAYMENTS ───────────────────────────────────────────
     @Override
     public List<PaymentResponse> getAllPayments() {
         return paymentRepository.findAll()
                 .stream()
-                .map(this::toResponse)
+                .map(PaymentMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
-    // ── ADMIN: UPDATE STATUS ──────────────────────────────────────────
     @Override
     @Transactional
-    public PaymentResponse updatePaymentStatus(Long paymentId,
-                                               String status) {
+    public PaymentResponse updatePaymentStatus(Long paymentId, String status) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Payment not found"));
         payment.setStatus(PaymentStatus.valueOf(status.toUpperCase()));
-        return toResponse(paymentRepository.save(payment));
+        return PaymentMapper.toResponse(paymentRepository.save(payment));
     }
 }

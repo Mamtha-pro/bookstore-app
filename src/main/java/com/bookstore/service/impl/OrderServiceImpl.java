@@ -2,11 +2,11 @@ package com.bookstore.service.impl;
 
 import com.bookstore.constants.OrderStatus;
 import com.bookstore.dto.request.PlaceOrderRequest;
-import com.bookstore.dto.response.OrderItemResponse;
 import com.bookstore.dto.response.OrderResponse;
 import com.bookstore.entity.*;
 import com.bookstore.exception.BadRequestException;
 import com.bookstore.exception.ResourceNotFoundException;
+import com.bookstore.mapper.OrderMapper;
 import com.bookstore.repository.*;
 import com.bookstore.service.OrderService;
 import com.bookstore.util.OrderPlacedEvent;
@@ -17,7 +17,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,44 +27,18 @@ public class OrderServiceImpl implements OrderService {
     private static final Logger log =
             LoggerFactory.getLogger(OrderServiceImpl.class);
 
-    private final OrderRepository          orderRepository;
-    private final CartRepository           cartRepository;
-    private final CartItemRepository       cartItemRepository;  // ← ADD THIS
-    private final UserRepository           userRepository;
+    private final OrderRepository           orderRepository;
+    private final CartRepository            cartRepository;
+    private final CartItemRepository        cartItemRepository;
+    private final UserRepository            userRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     // ── Helper: Get User ──────────────────────────────────────────────
     private User getUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("User not found: " + email));
-    }
-
-    // ── Helper: Entity → DTO ──────────────────────────────────────────
-    private OrderResponse toResponse(Order order) {
-        List<OrderItemResponse> items = new ArrayList<>();
-
-        if (order.getOrderItems() != null) {
-            items = order.getOrderItems().stream()
-                    .map(item -> {
-                        OrderItemResponse r = new OrderItemResponse();
-                        r.setBookId(item.getBook().getId());
-                        r.setBookTitle(item.getBook().getTitle());
-                        r.setQuantity(item.getQuantity());
-                        r.setPrice(item.getPrice());
-                        return r;
-                    })
-                    .collect(Collectors.toList());
-        }
-
-        OrderResponse r = new OrderResponse();
-        r.setId(order.getId());
-        r.setStatus(order.getStatus().name());
-        r.setTotalAmount(order.getTotalAmount());
-        r.setAddress(order.getAddress());
-        r.setOrderedAt(order.getOrderedAt());
-        r.setItems(items);
-        return r;
+                        new ResourceNotFoundException(
+                                "User not found: " + email));
     }
 
     // ── Place Order ───────────────────────────────────────────────────
@@ -78,17 +51,19 @@ public class OrderServiceImpl implements OrderService {
         // ✅ Fetch cart
         Cart cart = cartRepository.findByUser(user)
                 .orElseThrow(() ->
-                        new BadRequestException("Your cart is empty! Add books first."));
+                        new BadRequestException(
+                                "Your cart is empty! Add books first."));
 
-        // ✅ Load items directly from DB (avoids stale JPA cache)
+        // ✅ Load items directly from DB
         List<CartItem> cartItems = cartItemRepository.findByCart(cart);
 
-        // ✅ Check cart has items
+        // ✅ Validate cart not empty
         if (cartItems == null || cartItems.isEmpty()) {
-            throw new BadRequestException("Your cart is empty! Add books first.");
+            throw new BadRequestException(
+                    "Your cart is empty! Add books first.");
         }
 
-        // ✅ Check address provided
+        // ✅ Validate address
         if (request.getAddress() == null
                 || request.getAddress().trim().isEmpty()) {
             throw new BadRequestException("Delivery address is required!");
@@ -122,20 +97,20 @@ public class OrderServiceImpl implements OrderService {
 
         Order saved = orderRepository.save(order);
 
-        // ✅ Clear cart properly — delete items directly from DB
+        // ✅ Clear cart properly
         cartItemRepository.deleteAll(cartItems);
         cart.getItems().clear();
         cartRepository.save(cart);
 
-        // ✅ Fire notification event
+        // ✅ Fire event
         eventPublisher.publishEvent(new OrderPlacedEvent(
                 this,
                 saved.getId(),
                 user.getEmail(),
                 saved.getTotalAmount()));
 
-        log.info("Order placed: {} by: {}", saved.getId(), email);
-        return toResponse(saved);
+        log.info("Order placed: " + saved.getId() + " by: " + email);
+        return OrderMapper.toResponse(saved);
     }
 
     // ── Get My Orders ─────────────────────────────────────────────────
@@ -145,7 +120,7 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository
                 .findByUserOrderByOrderedAtDesc(user)
                 .stream()
-                .map(this::toResponse)
+                .map(OrderMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -157,7 +132,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Order not found: " + orderId));
-        return toResponse(order);
+        return OrderMapper.toResponse(order);
     }
 
     // ── Cancel Order ──────────────────────────────────────────────────
@@ -178,8 +153,8 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.CANCELLED);
         Order saved = orderRepository.save(order);
 
-        log.info("Order cancelled: {} by: {}", orderId, email);
-        return toResponse(saved);
+        log.info("Order cancelled: " + orderId + " by: " + email);
+        return OrderMapper.toResponse(saved);
     }
 
     // ── Admin: All Orders ─────────────────────────────────────────────
@@ -187,7 +162,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderResponse> getAllOrders() {
         return orderRepository.findAll()
                 .stream()
-                .map(this::toResponse)
+                .map(OrderMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -203,7 +178,7 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.valueOf(status.toUpperCase()));
         Order saved = orderRepository.save(order);
 
-        log.info("Order status updated: {} to: {}", orderId, status);
-        return toResponse(saved);
+        log.info("Order status updated: " + orderId + " to: " + status);
+        return OrderMapper.toResponse(saved);
     }
 }

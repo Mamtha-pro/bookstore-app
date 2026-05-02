@@ -8,7 +8,8 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getAllUsers().then(r => setUsers(r.data)).finally(() => setLoading(false));
+    // ✅ CHANGED: r.data.data
+    getAllUsers().then(r => setUsers(r.data.data)).finally(() => setLoading(false));
   }, []);
 
   const handleDelete = async (id) => {
@@ -22,19 +23,30 @@ export default function AdminUsers() {
 
   return (
     <div>
-      <h1 style={{ fontSize:24, fontWeight:800, marginBottom:20 }}>👥 All Users</h1>
+      <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 20 }}>👥 All Users</h1>
       <div className="card table-wrap">
         <table>
           <thead>
-            <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Action</th></tr>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Joined</th>
+              <th>Action</th>
+            </tr>
           </thead>
           <tbody>
             {users.map(u => (
               <tr key={u.id}>
                 <td>#{u.id}</td>
-                <td style={{ fontWeight:600 }}>{u.name}</td>
+                <td style={{ fontWeight: 600 }}>{u.name}</td>
                 <td>{u.email}</td>
-                <td><span className={`badge ${u.role==='ADMIN'?'badge-danger':'badge-info'}`}>{u.role}</span></td>
+                <td>
+                  <span className={`badge ${u.role === 'ADMIN' ? 'badge-danger' : 'badge-info'}`}>
+                    {u.role}
+                  </span>
+                </td>
                 <td>{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</td>
                 <td>
                   <button className="btn btn-danger btn-sm" onClick={() => handleDelete(u.id)}>

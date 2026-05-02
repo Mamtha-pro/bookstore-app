@@ -1,12 +1,12 @@
 package com.bookstore.security;
 
-
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,8 +20,11 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenProvider jwtTokenProvider;
-    private final CustomUserDetailsService userDetailsService;
+    private static final Logger log =
+            LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
+    private final JwtTokenProvider          jwtTokenProvider;
+    private final CustomUserDetailsService  userDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -29,28 +32,57 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        String token = getTokenFromRequest(request);
+        String path   = request.getRequestURI();
+        String method = request.getMethod();
 
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            String username = jwtTokenProvider.getUsernameFromToken(token);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        // Skip OPTIONS preflight
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        String authHeader = request.getHeader("Authorization");
 
-            SecurityContextHolder.getContext().setAuthentication(auth);
+        // ✅ Debug log — you will see this in IntelliJ console
+        log.info("Request: " + method + " " + path
+                + " | Auth header: " + (authHeader != null
+                ? authHeader.substring(0, Math.min(20, authHeader.length())) + "..."
+                : "MISSING"));
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.warn("No JWT token for: " + method + " " + path);
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        try {
+            String token    = authHeader.substring(7);
+            boolean isValid = jwtTokenProvider.validateToken(token);
+
+            log.info("Token valid: " + isValid + " for: " + path);
+
+            if (isValid) {
+                String username = jwtTokenProvider.getUsernameFromToken(token);
+                UserDetails userDetails =
+                        userDetailsService.loadUserByUsername(username);
+
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails, null,
+                                userDetails.getAuthorities());
+                auth.setDetails(
+                        new WebAuthenticationDetailsSource()
+                                .buildDetails(request));
+
+                SecurityContextHolder.getContext().setAuthentication(auth);
+                log.info("Auth set for user: " + username
+                        + " roles: " + userDetails.getAuthorities());
+            }
+
+        } catch (Exception e) {
+            log.error("JWT filter error: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private String getTokenFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        return null;
     }
 }

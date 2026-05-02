@@ -166,3 +166,12 @@ tr:hover { background: #f9fafb; }
   color: var(--muted);
 }
 .empty-state h3 { font-size: 20px; margin-bottom: 8px; }
+
+@media (max-width: 768px) {
+  .admin-topbar {
+    display: flex !important;
+  }
+  .mobile-header {
+    display: block !important;
+  }
+}

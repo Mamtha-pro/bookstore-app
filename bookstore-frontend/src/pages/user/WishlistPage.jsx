@@ -12,7 +12,8 @@ export default function WishlistPage() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    getWishlist().then(r => setItems(r.data)).finally(() => setLoading(false));
+    // ✅ CHANGED: r.data.data because backend now wraps in ApiResponse
+    getWishlist().then(r => setItems(r.data.data)).finally(() => setLoading(false));
   }, []);
 
   const handleRemove = async (id) => {
@@ -23,8 +24,9 @@ export default function WishlistPage() {
 
   const handleMoveToCart = async (id) => {
     await moveToCart(id);
+    // ✅ CHANGED: res.data.data
     const res = await getCart();
-    dispatch(setCart(res.data));
+    dispatch(setCart(res.data.data));
     setItems(items.filter(i => i.id !== id));
     toast.success('Moved to cart!');
   };

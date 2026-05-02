@@ -1,5 +1,6 @@
 package com.bookstore.controller;
 
+import com.bookstore.dto.response.ApiResponse;
 import com.bookstore.dto.request.PlaceOrderRequest;
 import com.bookstore.dto.response.OrderResponse;
 import com.bookstore.service.OrderService;
@@ -7,7 +8,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,8 +32,8 @@ public class OrderController {
     @Operation(summary = "Place order from cart",
             description = "Converts current cart into an order. Cart is cleared after.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = " Order placed successfully"),
-            @ApiResponse(responseCode = "400", description = " Cart is empty")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Order placed successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Cart is empty")
     })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             content = @Content(examples = @ExampleObject(value = """
@@ -42,52 +42,61 @@ public class OrderController {
             }
             """))
     )
-    public ResponseEntity<OrderResponse> placeOrder(
+    public ResponseEntity<ApiResponse<OrderResponse>> placeOrder(
             @AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody PlaceOrderRequest request) {
+        OrderResponse order = orderService.placeOrder(user.getUsername(), request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(orderService.placeOrder(user.getUsername(), request));
+                .body(ApiResponse.success(order, "Order placed successfully", 201));
     }
 
     @GetMapping("/api/orders")
     @Operation(summary = "Get my orders",
             description = "Returns all orders for the logged-in user, newest first.")
-    public List<OrderResponse> getMyOrders(
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> getMyOrders(
             @AuthenticationPrincipal UserDetails user) {
-        return orderService.getMyOrders(user.getUsername());
+        List<OrderResponse> orders = orderService.getMyOrders(user.getUsername());
+        return ResponseEntity.ok(
+                ApiResponse.success(orders, "Orders retrieved successfully", 200));
     }
 
     @GetMapping("/api/orders/{id}")
     @Operation(summary = "Get single order details")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = " Order found"),
-            @ApiResponse(responseCode = "404", description = " Order not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Order found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Order not found")
     })
-    public OrderResponse getOrder(
+    public ResponseEntity<ApiResponse<OrderResponse>> getOrder(
             @AuthenticationPrincipal UserDetails user,
             @Parameter(description = "Order ID", example = "1")
             @PathVariable Long id) {
-        return orderService.getOrderById(user.getUsername(), id);
+        OrderResponse order = orderService.getOrderById(user.getUsername(), id);
+        return ResponseEntity.ok(
+                ApiResponse.success(order, "Order retrieved successfully", 200));
     }
 
     @PutMapping("/api/orders/{id}/cancel")
     @Operation(summary = "Cancel order",
             description = "Cancel a PENDING order. Cannot cancel SHIPPED or DELIVERED orders.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = " Order cancelled"),
-            @ApiResponse(responseCode = "400", description = " Order cannot be cancelled")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Order cancelled"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Order cannot be cancelled")
     })
-    public OrderResponse cancelOrder(
+    public ResponseEntity<ApiResponse<OrderResponse>> cancelOrder(
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long id) {
-        return orderService.cancelOrder(user.getUsername(), id);
+        OrderResponse order = orderService.cancelOrder(user.getUsername(), id);
+        return ResponseEntity.ok(
+                ApiResponse.success(order, "Order cancelled successfully", 200));
     }
 
     @GetMapping("/api/admin/orders")
     @Operation(summary = "Get ALL orders (Admin)",
             description = "Admin only — view all orders across all users.")
-    public List<OrderResponse> getAllOrders() {
-        return orderService.getAllOrders();
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> getAllOrders() {
+        List<OrderResponse> orders = orderService.getAllOrders();
+        return ResponseEntity.ok(
+                ApiResponse.success(orders, "All orders retrieved successfully", 200));
     }
 
     @PutMapping("/api/admin/orders/{id}/status")
@@ -97,12 +106,13 @@ public class OrderController {
                    
                    Valid values: `PENDING` `CONFIRMED` `SHIPPED` `DELIVERED` `CANCELLED`
                    """)
-    public OrderResponse updateStatus(
+    public ResponseEntity<ApiResponse<OrderResponse>> updateStatus(
             @Parameter(description = "Order ID", example = "1")
             @PathVariable Long id,
-            @Parameter(description = "New status",
-                    example = "CONFIRMED")
+            @Parameter(description = "New status", example = "CONFIRMED")
             @RequestParam String status) {
-        return orderService.updateOrderStatus(id, status);
+        OrderResponse order = orderService.updateOrderStatus(id, status);
+        return ResponseEntity.ok(
+                ApiResponse.success(order, "Order status updated", 200));
     }
 }

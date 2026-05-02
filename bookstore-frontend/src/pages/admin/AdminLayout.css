@@ -1,45 +1,203 @@
+/* ═══════════════════════════════════════════════════════════════════
+   ADMIN LAYOUT — Professional Mobile-First Design
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Base Layout ─────────────────────────────────────────────────── */
 .admin-layout {
   display: flex;
-  min-height: calc(100vh - 64px);
+  min-height: 100vh;
+}
+/* Remove gap between admin content and footer */
+.admin-layout {
+  min-height: calc(100vh - 60px); /* remove this line */
 }
 
+.admin-main {
+  padding-bottom: 0;  /* ✅ remove bottom padding */
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────── */
 .admin-sidebar {
-  width: 220px;
-  background: #1f2937;
+  width: 240px;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
   color: white;
-  padding: 20px 0;
+  padding: 0;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .admin-brand {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 800;
-  padding: 0 20px 20px;
-  border-bottom: 1px solid #374151;
-  margin-bottom: 12px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+  color: white;
 }
 
 .admin-nav-link {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 12px 20px;
-  color: #9ca3af;
-  font-size: 15px;
+  color: #94a3b8;
+  font-size: 14px;
   font-weight: 500;
   transition: all 0.2s;
   text-decoration: none;
+  border-left: 3px solid transparent;
+  margin: 2px 0;
 }
 
-.admin-nav-link:hover,
-.admin-nav-link.active {
-  background: #374151;
+.admin-nav-link:hover {
+  background: rgba(255,255,255,0.08);
   color: white;
+  border-left-color: #3b82f6;
 }
 
+.admin-nav-link.active {
+  background: rgba(59,130,246,0.2);
+  color: white;
+  border-left-color: #3b82f6;
+  font-weight: 600;
+}
+
+/* ── Main Content ────────────────────────────────────────────────── */
 .admin-main {
   flex: 1;
-  padding: 30px;
-  background: var(--bg);
+  padding: 28px;
+  background: #f8fafc;
   overflow-y: auto;
+  min-height: 100vh;
+}
+
+/* ── Hamburger — hidden on desktop ──────────────────────────────── */
+.admin-menu-btn {
+  display: none;
+}
+
+/* ── Overlay — hidden on desktop ────────────────────────────────── */
+.admin-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 998;
+  backdrop-filter: blur(2px);
+}
+
+.admin-overlay.open {
+  display: block;
+}
+
+/* ── Dashboard Grids ─────────────────────────────────────────────── */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dashboard-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MOBILE STYLES
+══════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Layout becomes single column */
+  .admin-layout {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ── Mobile Top Bar ── */
+  .admin-topbar {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: white;
+    padding: 12px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  /* ── Hamburger ── */
+  .admin-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* ── Sidebar slides in from left ── */
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: -260px;
+    height: 100vh;
+    width: 240px;
+    z-index: 999;
+    transition: left 0.3s ease;
+    padding-top: 0;
+  }
+
+  .admin-sidebar.open {
+    left: 0;
+  }
+
+  /* ── Main content full width ── */
+  .admin-main {
+    padding: 16px;
+    min-height: calc(100vh - 62px);
+    padding-bottom: 40px;
+    flex:1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Stat Cards — 2 columns ── */
+  .dashboard-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  /* ── Quick Actions — 2 columns ── */
+  .dashboard-actions {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  /* ── Table scrolls horizontally ── */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ── Cards full width ── */
+  .card {
+    border-radius: 10px !important;
+  }
 }

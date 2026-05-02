@@ -22,7 +22,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CorsConfig corsConfig;
+    private final CorsConfig              corsConfig;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -38,59 +38,58 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http) throws Exception {
+
         http
-                // ✅ Enable CORS with our config
                 .cors(cors -> cors.configurationSource(
                         corsConfig.corsConfigurationSource()))
 
-                // ✅ Disable CSRF (REST API — stateless)
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // ✅ Stateless sessions (JWT)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // ✅ Route permissions
                 .authorizeHttpRequests(auth -> auth
 
-                        // Swagger UI — public
+                        // ── Always allow OPTIONS preflight ─────────────────
+                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                        .permitAll()
+
+                        // ── Swagger UI ─────────────────────────────────────
                         .requestMatchers(
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
-                                "/api-docs/**",
                                 "/api-docs",
-                                "/v3/api-docs/**"
-                        ).permitAll()
+                                "/api-docs/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**")
+                        .permitAll()
 
-                        // Auth — public
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // ── Auth (register, login) ─────────────────────────
+                        .requestMatchers("/api/auth/**")
+                        .permitAll()
 
-                        // Books GET — public
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/books/**"
-                        ).permitAll()
+//                        // ── AI Assistant — public ──────────────────────────
+//                        .requestMatchers("/api/ai/**")        // ✅ ADDED
+//                        .permitAll()
 
-                        // Reviews GET — public
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/reviews/book/**"
-                        ).permitAll()
+                        // ── Books public browsing ──────────────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/books")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/books/**")
+                        .permitAll()
 
-                        // AI chat — public
-                        .requestMatchers("/api/ai/**").permitAll()
+                        // ── Reviews public read ────────────────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/book/**")
+                        .permitAll()
 
-                        // OPTIONS preflight — always allow
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // ── Admin only ─────────────────────────────────────
+                        .requestMatchers("/api/admin/**")
+                        .hasRole("ADMIN")
 
-                        // Admin only
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                        // Everything else needs login
+                        // ── Everything else needs login ────────────────────
                         .anyRequest().authenticated()
                 )
 
-                //  Add JWT filter
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);

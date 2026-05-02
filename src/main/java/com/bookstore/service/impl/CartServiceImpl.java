@@ -1,21 +1,24 @@
 package com.bookstore.service.impl;
 
 import com.bookstore.dto.request.AddToCartRequest;
-import com.bookstore.dto.response.*;
+import com.bookstore.dto.response.CartResponse;
 import com.bookstore.entity.*;
 import com.bookstore.exception.*;
+import com.bookstore.mapper.CartMapper;
 import com.bookstore.repository.*;
 import com.bookstore.service.CartService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(CartServiceImpl.class);
 
     private final CartRepository     cartRepository;
     private final CartItemRepository cartItemRepository;
@@ -24,7 +27,8 @@ public class CartServiceImpl implements CartService {
 
     private User getUser(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found: " + email));
     }
 
     private Cart getOrCreateCart(User user) {
@@ -34,36 +38,11 @@ public class CartServiceImpl implements CartService {
         });
     }
 
-    private CartResponse toResponse(Cart cart) {
-        // ← load items directly from DB, never rely on JPA cache
-        List<CartItem> items = cartItemRepository.findByCart(cart);
-
-        List<CartItemResponse> itemResponses = items.stream().map(item -> {
-            CartItemResponse r = new CartItemResponse();
-            r.setItemId(item.getId());
-            r.setBookId(item.getBook().getId());
-            r.setBookTitle(item.getBook().getTitle());
-            r.setQuantity(item.getQuantity());
-            r.setUnitPrice(item.getUnitPrice());
-            r.setSubtotal(item.getUnitPrice() * item.getQuantity());
-            return r;
-        }).collect(Collectors.toList());
-
-        double total = itemResponses.stream()
-                .mapToDouble(CartItemResponse::getSubtotal).sum();
-
-        CartResponse response = new CartResponse();
-        response.setCartId(cart.getId());
-        response.setItems(itemResponses);
-        response.setTotalAmount(total);
-        return response;
-    }
-
     @Override
     public CartResponse getCart(String email) {
         User user = getUser(email);
         Cart cart = getOrCreateCart(user);
-        return toResponse(cart);
+        return CartMapper.toResponse(cart);
     }
 
     @Override
@@ -72,49 +51,52 @@ public class CartServiceImpl implements CartService {
         User user = getUser(email);
         Cart cart = getOrCreateCart(user);
         Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Book not found: " + request.getBookId()));
 
-        // Check if book already in cart
-        CartItem existing = cartItemRepository.findByCart(cart)
-                .stream()
+        cart.getItems().stream()
                 .filter(i -> i.getBook().getId().equals(request.getBookId()))
                 .findFirst()
-                .orElse(null);
+                .ifPresentOrElse(
+                        existing -> existing.setQuantity(
+                                existing.getQuantity() + request.getQuantity()),
+                        () -> {
+                            CartItem newItem = CartItem.builder()
+                                    .cart(cart)
+                                    .book(book)
+                                    .quantity(request.getQuantity())
+                                    .unitPrice(book.getPrice())
+                                    .build();
+                            cart.getItems().add(newItem);
+                        });
 
-        if (existing != null) {
-            // ← update quantity and save directly
-            existing.setQuantity(existing.getQuantity() + request.getQuantity());
-            cartItemRepository.save(existing);
-        } else {
-            // ← save new item directly, don't rely on cascade
-            CartItem newItem = CartItem.builder()
-                    .cart(cart)
-                    .book(book)
-                    .quantity(request.getQuantity())
-                    .unitPrice(book.getPrice())
-                    .build();
-            cartItemRepository.save(newItem);
-        }
-
-        return toResponse(cart);
+        Cart saved = cartRepository.save(cart);
+        log.info("Book " + request.getBookId() + " added to cart for: " + email);
+        return CartMapper.toResponse(saved);
     }
 
     @Override
     @Transactional
-    public CartResponse updateCartItem(String email, Long itemId, Integer quantity) {
+    public CartResponse updateCartItem(String email,
+                                       Long itemId, Integer quantity) {
         CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart item not found"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Cart item not found: " + itemId));
         item.setQuantity(quantity);
         cartItemRepository.save(item);
-        return toResponse(item.getCart());
+        return CartMapper.toResponse(item.getCart());
     }
 
     @Override
     @Transactional
     public void removeCartItem(String email, Long itemId) {
         CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart item not found"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Cart item not found: " + itemId));
+        item.getCart().getItems().remove(item);
         cartItemRepository.delete(item);
+        log.info("Cart item " + itemId + " removed for: " + email);
     }
 
     @Override
@@ -122,7 +104,8 @@ public class CartServiceImpl implements CartService {
     public void clearCart(String email) {
         User user = getUser(email);
         Cart cart = getOrCreateCart(user);
-        List<CartItem> items = cartItemRepository.findByCart(cart);
-        cartItemRepository.deleteAll(items);
+        cart.getItems().clear();
+        cartRepository.save(cart);
+        log.info("Cart cleared for: " + email);
     }
 }

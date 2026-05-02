@@ -1,5 +1,6 @@
 package com.bookstore.controller;
 
+import com.bookstore.dto.response.ApiResponse;
 import com.bookstore.dto.request.ChangePasswordRequest;
 import com.bookstore.dto.request.UpdateProfileRequest;
 import com.bookstore.dto.response.UserResponse;
@@ -8,7 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -31,10 +32,13 @@ public class UserController {
     @GetMapping("/api/users/me")
     @Operation(summary = "Get my profile",
             description = "Returns the logged-in user's profile details.")
-    @ApiResponse(responseCode = "200", description = " Profile returned")
-    public ResponseEntity<UserResponse> getMyProfile(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200", description = "Profile returned")
+    public ResponseEntity<ApiResponse<UserResponse>> getMyProfile(
             @AuthenticationPrincipal UserDetails user) {
-        return ResponseEntity.ok(userService.getMyProfile(user.getUsername()));
+        UserResponse profile = userService.getMyProfile(user.getUsername());
+        return ResponseEntity.ok(
+                ApiResponse.success(profile, "Profile retrieved successfully", 200));
     }
 
     @PutMapping("/api/users/me")
@@ -48,11 +52,12 @@ public class UserController {
             }
             """))
     )
-    public ResponseEntity<UserResponse> updateProfile(
+    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
             @AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody UpdateProfileRequest request) {
+        UserResponse updated = userService.updateProfile(user.getUsername(), request);
         return ResponseEntity.ok(
-                userService.updateProfile(user.getUsername(), request));
+                ApiResponse.success(updated, "Profile updated successfully", 200));
     }
 
     @PutMapping("/api/users/me/password")
@@ -66,36 +71,43 @@ public class UserController {
             }
             """))
     )
-    public ResponseEntity<String> changePassword(
+    public ResponseEntity<ApiResponse<String>> changePassword(
             @AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody ChangePasswordRequest request) {
         userService.changePassword(user.getUsername(), request);
-        return ResponseEntity.ok("Password changed successfully");
+        return ResponseEntity.ok(
+                ApiResponse.success("Password changed successfully", "Password updated", 200));
     }
 
     @GetMapping("/api/admin/users")
     @Operation(summary = "Get ALL users (Admin)",
             description = "Admin only — list all registered users.")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
+        List<UserResponse> users = userService.getAllUsers();
+        return ResponseEntity.ok(
+                ApiResponse.success(users, "Users retrieved successfully", 200));
     }
 
     @GetMapping("/api/admin/users/{id}")
     @Operation(summary = "Get user by ID (Admin)")
-    public ResponseEntity<UserResponse> getUserById(
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(
             @Parameter(description = "User ID", example = "1")
             @PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+        UserResponse user = userService.getUserById(id);
+        return ResponseEntity.ok(
+                ApiResponse.success(user, "User retrieved successfully", 200));
     }
 
     @DeleteMapping("/api/admin/users/{id}")
     @Operation(summary = "Delete user (Admin)",
             description = "Admin only — permanently delete a user account.")
-    @ApiResponse(responseCode = "204", description = " User deleted")
-    public ResponseEntity<Void> deleteUser(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200", description = "User deleted")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
             @Parameter(description = "User ID", example = "1")
             @PathVariable Long id) {
         userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                ApiResponse.success(null, "User deleted successfully", 200));
     }
 }
